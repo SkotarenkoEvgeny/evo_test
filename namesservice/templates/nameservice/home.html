@@ -1,0 +1,96 @@
+{% extends 'nameservice/base.html' %}
+{% block title %}Name-form{% endblock %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="modal fade" id="exampleModal" tabindex="-1"
+         aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"
+                        id="exampleModalLabel">Привітання</h5>
+                    <button type="button" class="btn-close"
+                            data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h1 id="response_value"></h1>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary"
+                            data-bs-dismiss="modal" id="modal_close">Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <form method="post" id="name-form">
+            {% csrf_token %}
+            <table>{{ form|crispy }}</table>
+            <button type="submit"
+                    {#             data-bs-toggle="modal"#}
+                    data-bs-target="#exampleModal" class="btn
+            btn-primary">привітатися
+            </button>
+        </form>
+    </div>
+    <!-- JQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- JQuery validation -->
+    <script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/additional-methods.min.js"></script>
+
+
+    <script>
+        // form validation
+        $('#name-form').validate({
+            rules: {
+                name: {
+                    required: true,
+                    pattern: /^[a-zA-Zа-яА-ЯёЁЇї]+$/,
+                    minlength: 2,
+                }
+            },
+            messages: {
+                name: {
+                    required: "Please enter name",
+                    minlength: "only letters"
+                },
+            },
+        });
+        console.log($('#name-form').valid())
+        // modal window handler
+        let myModal = $('#exampleModal');
+        $(document).ready(function () {
+            $('#name-form').submit(function () {
+                if ($(this).valid()) {
+                    $.ajax({
+                        data: $(this).serialize(),
+                        type: 'POST',
+                        url: "{% url 'home' %}",
+                        success: function (response) {
+                            if (response.accepted === true) {
+                                $('#response_value').append('Привіт, ' +
+                                    response.name);
+                            } else {
+                                $('#response_value').append('Вже бачилися, ' +
+                                    response.name);
+                            }
+                            $('#exampleModal').modal('show');
+                            {#exampleModal.show();#}
+                        },
+                        error: function (response) {
+                            console.log(response.responseJSON.errors)
+                        }
+                    });
+                }
+                return false;
+            });
+        })
+        $('#modal_close').click(function () {
+            $('#name-form').trigger('reset');
+            window.location.href = "{% url 'home' %}";
+        });
+    </script>
+{% endblock %}
